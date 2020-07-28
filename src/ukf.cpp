@@ -1,4 +1,5 @@
 #include "ukf.h"
+
 #include "Eigen/Dense"
 
 using Eigen::MatrixXd;
@@ -15,10 +16,10 @@ UKF::UKF() {
   use_radar_ = true;
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 30;
+  std_a_ = 3;
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = 30;
+  std_yawdd_ = 3;
   
   /**
    * DO NOT MODIFY measurement noise values below.
@@ -58,29 +59,47 @@ UKF::UKF() {
   // Sigma point spreading parameter
   lambda_ = 3 - n_aug_;
 
+  // initialize state vector
+  x_ = VectorXd(n_x_);
+
+  // initialize augmented state vector
+  x_aug_ = VectorXd(n_aug_);
+
+  // initialize covariance matrix
+  P_ = MatrixXd(n_x_, n_x_);
+
+  // initialize augmented covariance matrix
+  P_aug_ = MatrixXd(n_aug_, n_aug_);
+
   // Radar measurement dimension
   n_z_radar_ = 3;
 
   // Lidar measurement dimension
   n_z_lidar_ = 2;
 
-  // initial state vector
-  x_ = VectorXd(n_x_);
+  // initialize predicted radar measurement
+  z_radar_pred_ = VectorXd(n_z_radar_);
 
-  // initial covariance matrix
-  P_ = MatrixXd(n_x_, n_x_);
+  // initialize predicted radar measurement
+  z_lidar_pred_ = VectorXd(n_z_lidar_);
+
+  // initial predicted radar measurement covariance matrix
+  S_radar_pred_ = MatrixXd(n_z_radar_, n_z_radar_);
+
+  // initial predicted lidar measurement covariance matrix
+  S_lidar_pred_ = MatrixXd(n_z_lidar_, n_z_lidar_);
 
   // predicted sigma points in state space
-  MatrixXd Xsig_pred_ = MatrixXd(n_x_, 2 * n_aug_ + 1);
+  Xsig_pred_ = MatrixXd(n_x_, 2 * n_aug_ + 1);
   
   // predicted sigma points in augmented state space
-  MatrixXd Xsig_aug_ = MatrixXd(n_aug_, 2 * n_aug_ + 1);
+  Xsig_aug_ = MatrixXd(n_aug_, 2 * n_aug_ + 1);
   
   // measurement sigma points in state space
-  MatrixXd Zsig_radar_ = MatrixXd(n_z_radar_, 2 * n_aug_ + 1);
+  Zsig_radar_ = MatrixXd(n_z_radar_, 2 * n_aug_ + 1);
 
   // measurement sigma points in state space
-  MatrixXd Zsig_lidar_ = MatrixXd(n_z_lidar_, 2 * n_aug_ + 1);
+  Zsig_lidar_ = MatrixXd(n_z_lidar_, 2 * n_aug_ + 1);
   
   // Weights of sigma points
   weights_ = VectorXd(2*n_aug_ + 1);
@@ -112,16 +131,21 @@ void UKF::NormAngle(double& angle)
 
 void UKF::AugmentedSigmaPoints()
 {
+  std::cout << "1. " << std::endl;
   // create augmented mean state
   x_aug_.head(n_x_) = x_;
-  x_aug_(n_x_) = 0;
-  x_aug_(n_x_+1) = 0;
+  std::cout << "2. " << std::endl;
+  x_aug_(n_x_) = 0.0;
+  std::cout << "3. " << std::endl;
+  x_aug_(n_x_+1) = 0.0;
+  std::cout << "AugmentedSigmaPoints mean state Successfully!" << std::endl;
 
   // create augmented covariance matrix
   P_aug_.fill(0.0);
   P_aug_.topLeftCorner(n_x_, n_x_) = P_;
   P_aug_(n_x_, n_x_) = std_a_*std_a_;
   P_aug_(n_x_+1, n_x_+1) = std_yawdd_*std_yawdd_;
+  std::cout << "AugmentedSigmaPoints covariance matrix Successfully!" << std::endl;
 
   // create square root matrix
   MatrixXd L = P_aug_.llt().matrixL();
@@ -134,6 +158,7 @@ void UKF::AugmentedSigmaPoints()
     Xsig_aug_.col(i+1) = x_aug_ + sqrt(lambda_+n_aug_) * L.col(i);
     Xsig_aug_.col(i+1+n_aug_) = x_aug_ - sqrt(lambda_+n_aug_) * L.col(i);
   }
+  std::cout << "AugmentedSigmaPoints sigma points Successfully!" << std::endl;
 }
 
 void UKF::SigmaPointPrediction(const double delta_t)
@@ -210,11 +235,14 @@ void UKF::Prediction(double delta_t) {
    * Modify the state vector, x_. Predict sigma points, the state, 
    * and the state covariance matrix.
    */
+  
+  std::cout << "Predicting..." << std::endl;
   AugmentedSigmaPoints();
-
+  std::cout << "AugmentedSigmaPoints Successfully!" << std::endl;
   SigmaPointPrediction(delta_t);
-
+  std::cout << "SigmaPointPrediction Successfully!" << std::endl;
   PredictMeanAndCovariance();
+  std::cout << "PredictMeanAndCovariance Successfully!" << std::endl;
 }
 
 void UKF::UpdateLidar(const MeasurementPackage& meas_package) {
@@ -371,6 +399,8 @@ void UKF::ProcessMeasurement(const MeasurementPackage& meas_package) {
 
   if (!is_initialized_)
   {
+    std::cout << "UKF is not initialized" << std::endl;
+    std::cout << "UKF initializing..." << std::endl;
     // initialize UKF based on the sensor type
     if (meas_package.sensor_type_ == MeasurementPackage::SensorType::RADAR)
     {
@@ -412,27 +442,31 @@ void UKF::ProcessMeasurement(const MeasurementPackage& meas_package) {
       is_initialized_ = true;
       time_us_ = meas_package.timestamp_;
     }
+
+    std::cout << "UKF initialized" << std::endl;
   }
   else // if UKF is initialized
   {
+    std::cout << "UKF is initialized" << std::endl;
     // update the time interval
     const double dt = (meas_package.timestamp_ - time_us_) / 1000000.0;
     time_us_ = meas_package.timestamp_;
     
     // Prediction Step
     Prediction(dt);
-
+    std::cout << "Prediction Step Done!" << std::endl;
     // Update Step
     if (meas_package.sensor_type_ == MeasurementPackage::SensorType::RADAR)
     {
       UpdateRadar(meas_package);
+      std::cout << "Radar Updated Successfully!" << std::endl;
     }
     else if (meas_package.sensor_type_ == MeasurementPackage::SensorType::LASER)
     {
       UpdateLidar(meas_package);
+      std::cout << "Lidar Updated Successfully!" << std::endl;
     }
-  }
-  
 
-  
+    std::cout << "UKF updated" << std::endl;
+  }
 }
