@@ -56,9 +56,23 @@ class UKF {
   // if this is false, the NIS won't be logged
   bool b_NIS_;
 
-  // recording of the NIS
-  std::vector<double> NIS_radar_;
-  std::vector<double> NIS_lidar_;
+  // NIS threshold
+  double NIS_lower_;
+  double NIS_upper_;
+
+  // Measurement count
+  long lidar_count_;
+  long radar_count_;
+
+  // NIS outlier rate
+  double NIS_lidar_lower_rate_;
+  double NIS_lidar_upper_rate_;
+  double NIS_radar_lower_rate_;
+  double NIS_radar_upper_rate_;
+
+  // // recording of the NIS
+  // std::vector<double> NIS_radar_;
+  // std::vector<double> NIS_lidar_;
 
   // state vector: [pos1 pos2 vel_abs yaw_angle yaw_rate] in SI units and rad
   Eigen::VectorXd x_;

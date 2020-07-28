@@ -15,6 +15,23 @@ UKF::UKF() {
   // if this is false, radar measurements will be ignored (except during init)
   use_radar_ = true;
 
+  // if this is false, the NIS won't be logged
+  b_NIS_ = true;
+
+  // NIS threshold
+  NIS_lower_ = 0.352;
+  NIS_upper_ = 7.815;
+
+  // Measurement count
+  lidar_count_ = 0;
+  radar_count_ = 0;
+
+  // NIS outlier rate
+  NIS_lidar_lower_rate_ = 0.0;
+  NIS_lidar_upper_rate_ = 0.0;
+  NIS_radar_lower_rate_ = 0.0;
+  NIS_radar_upper_rate_ = 0.0;
+
   // Process noise standard deviation longitudinal acceleration in m/s^2
   std_a_ = 3;
 
@@ -300,7 +317,18 @@ void UKF::UpdateLidar(const MeasurementPackage& meas_package) {
   
   if (b_NIS_)
   {
-    NIS_lidar_.push_back(z_diff.transpose() * S_lidar_pred_.inverse() * z_diff);
+    const double nis = z_diff.transpose() * S_lidar_pred_.inverse() * z_diff;
+    if (nis <= NIS_lower_)
+    {
+      NIS_lidar_lower_rate_ = (NIS_lidar_lower_rate_*lidar_count_ + 1)/(++lidar_count_);
+    }
+    else if (nis >= NIS_upper_)
+    {
+      NIS_lidar_upper_rate_ = (NIS_lidar_upper_rate_*lidar_count_ + 1)/(++lidar_count_);
+    }
+    
+    std::cout << "NIS_lidar_lower_rate_: " << NIS_lidar_lower_rate_ << std::endl;
+    std::cout << "NIS_lidar_upper_rate_: " << NIS_lidar_upper_rate_ << std::endl;
   }
 }
 
@@ -379,7 +407,17 @@ void UKF::UpdateRadar(const MeasurementPackage& meas_package) {
   
   if (b_NIS_)
   {
-    NIS_radar_.push_back(z_diff.transpose() * S_radar_pred_.inverse() * z_diff);
+    const double nis = z_diff.transpose() * S_radar_pred_.inverse() * z_diff;
+    if (nis <= NIS_lower_)
+    {
+      NIS_radar_lower_rate_ = (NIS_radar_lower_rate_*lidar_count_ + 1)/(++lidar_count_);
+    }
+    else if (nis >= NIS_upper_)
+    {
+      NIS_radar_upper_rate_ = (NIS_radar_upper_rate_*lidar_count_ + 1)/(++lidar_count_);
+    }
+    std::cout << "NIS_radar_lower_rate_: " << NIS_radar_lower_rate_ << std::endl;
+    std::cout << "NIS_radar_upper_rate_: " << NIS_radar_upper_rate_ << std::endl;
   }
 }
 
@@ -449,12 +487,10 @@ void UKF::ProcessMeasurement(const MeasurementPackage& meas_package) {
     if (meas_package.sensor_type_ == MeasurementPackage::SensorType::RADAR)
     {
       UpdateRadar(meas_package);
-      std::cout << "Radar Updated Successfully!" << std::endl;
     }
     else if (meas_package.sensor_type_ == MeasurementPackage::SensorType::LASER)
     {
       UpdateLidar(meas_package);
-      std::cout << "Lidar Updated Successfully!" << std::endl;
     }
 
     // std::cout << "UKF updated" << std::endl;

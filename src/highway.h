@@ -26,7 +26,7 @@ public:
 	bool visualize_radar = true;
 	bool visualize_pcd = false;
 	// Predict path in the future using UKF
-	double projectedTime = 2;
+	double projectedTime = 3;
 	int projectedSteps = 6;
 	// --------------------------------
 
