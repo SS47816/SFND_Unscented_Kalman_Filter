@@ -131,21 +131,16 @@ void UKF::NormAngle(double& angle)
 
 void UKF::AugmentedSigmaPoints()
 {
-  std::cout << "1. " << std::endl;
   // create augmented mean state
   x_aug_.head(n_x_) = x_;
-  std::cout << "2. " << std::endl;
   x_aug_(n_x_) = 0.0;
-  std::cout << "3. " << std::endl;
   x_aug_(n_x_+1) = 0.0;
-  std::cout << "AugmentedSigmaPoints mean state Successfully!" << std::endl;
 
   // create augmented covariance matrix
   P_aug_.fill(0.0);
   P_aug_.topLeftCorner(n_x_, n_x_) = P_;
   P_aug_(n_x_, n_x_) = std_a_*std_a_;
   P_aug_(n_x_+1, n_x_+1) = std_yawdd_*std_yawdd_;
-  std::cout << "AugmentedSigmaPoints covariance matrix Successfully!" << std::endl;
 
   // create square root matrix
   MatrixXd L = P_aug_.llt().matrixL();
@@ -158,7 +153,6 @@ void UKF::AugmentedSigmaPoints()
     Xsig_aug_.col(i+1) = x_aug_ + sqrt(lambda_+n_aug_) * L.col(i);
     Xsig_aug_.col(i+1+n_aug_) = x_aug_ - sqrt(lambda_+n_aug_) * L.col(i);
   }
-  std::cout << "AugmentedSigmaPoints sigma points Successfully!" << std::endl;
 }
 
 void UKF::SigmaPointPrediction(const double delta_t)
@@ -236,13 +230,11 @@ void UKF::Prediction(double delta_t) {
    * and the state covariance matrix.
    */
   
-  std::cout << "Predicting..." << std::endl;
   AugmentedSigmaPoints();
-  std::cout << "AugmentedSigmaPoints Successfully!" << std::endl;
+
   SigmaPointPrediction(delta_t);
-  std::cout << "SigmaPointPrediction Successfully!" << std::endl;
+  
   PredictMeanAndCovariance();
-  std::cout << "PredictMeanAndCovariance Successfully!" << std::endl;
 }
 
 void UKF::UpdateLidar(const MeasurementPackage& meas_package) {
@@ -308,7 +300,7 @@ void UKF::UpdateLidar(const MeasurementPackage& meas_package) {
   
   if (b_NIS_)
   {
-    NIS_.push_back(z_diff.transpose() * S_lidar_pred_.inverse() * z_diff);
+    NIS_lidar_.push_back(z_diff.transpose() * S_lidar_pred_.inverse() * z_diff);
   }
 }
 
@@ -387,7 +379,7 @@ void UKF::UpdateRadar(const MeasurementPackage& meas_package) {
   
   if (b_NIS_)
   {
-    NIS_.push_back(z_diff.transpose() * S_radar_pred_.inverse() * z_diff);
+    NIS_radar_.push_back(z_diff.transpose() * S_radar_pred_.inverse() * z_diff);
   }
 }
 
@@ -399,7 +391,6 @@ void UKF::ProcessMeasurement(const MeasurementPackage& meas_package) {
 
   if (!is_initialized_)
   {
-    std::cout << "UKF is not initialized" << std::endl;
     std::cout << "UKF initializing..." << std::endl;
     // initialize UKF based on the sensor type
     if (meas_package.sensor_type_ == MeasurementPackage::SensorType::RADAR)
@@ -447,14 +438,13 @@ void UKF::ProcessMeasurement(const MeasurementPackage& meas_package) {
   }
   else // if UKF is initialized
   {
-    std::cout << "UKF is initialized" << std::endl;
     // update the time interval
     const double dt = (meas_package.timestamp_ - time_us_) / 1000000.0;
     time_us_ = meas_package.timestamp_;
     
     // Prediction Step
     Prediction(dt);
-    std::cout << "Prediction Step Done!" << std::endl;
+    
     // Update Step
     if (meas_package.sensor_type_ == MeasurementPackage::SensorType::RADAR)
     {
@@ -467,6 +457,6 @@ void UKF::ProcessMeasurement(const MeasurementPackage& meas_package) {
       std::cout << "Lidar Updated Successfully!" << std::endl;
     }
 
-    std::cout << "UKF updated" << std::endl;
+    // std::cout << "UKF updated" << std::endl;
   }
 }

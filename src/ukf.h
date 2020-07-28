@@ -57,7 +57,8 @@ class UKF {
   bool b_NIS_;
 
   // recording of the NIS
-  std::vector<double> NIS_;
+  std::vector<double> NIS_radar_;
+  std::vector<double> NIS_lidar_;
 
   // state vector: [pos1 pos2 vel_abs yaw_angle yaw_rate] in SI units and rad
   Eigen::VectorXd x_;
