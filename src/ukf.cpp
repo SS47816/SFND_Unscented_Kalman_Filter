@@ -83,7 +83,7 @@ UKF::UKF() {
   MatrixXd Zsig_lidar_ = MatrixXd(n_z_lidar_, 2 * n_aug_ + 1);
   
   // Weights of sigma points
-  weights_ = Eigen::VectorXd(2*n_aug_ + 1);
+  weights_ = VectorXd(2*n_aug_ + 1);
   weights_(0) = lambda_/(lambda_ + n_aug_);
   const double weight = 0.5/(lambda_ + n_aug_);
   for (int i = 1; i < 2*n_aug_+1; ++i) {  
@@ -127,6 +127,7 @@ void UKF::AugmentedSigmaPoints(MatrixXd* Xsig_out)
   MatrixXd L = P_aug_.llt().matrixL();
 
   // create augmented sigma points
+  Xsig_aug_.fill(0.0);
   Xsig_aug_.col(0)  = x_aug_;
   for (int i = 0; i< n_aug_; ++i)
   {
@@ -158,6 +159,9 @@ void UKF::ProcessMeasurement(const MeasurementPackage& meas_package) {
           0.0, 0.0, std_radrd_ * std_radrd_, 0.0, 0.0,
           0.0, 0.0, 0.0, std_radphi_ * std_radphi_, 0.0,
           0.0, 0.0, 0.0, 0.0, 1;
+
+    is_initialized_ = true;
+    time_us_ = meas_package.timestamp_;
   }
   else if (meas_package.sensor_type_ == MeasurementPackage::SensorType::LASER)
   {
@@ -173,10 +177,10 @@ void UKF::ProcessMeasurement(const MeasurementPackage& meas_package) {
           0.0, 0.0, 1, 0.0, 0.0,
           0.0, 0.0, 0.0, 1, 0.0,
           0.0, 0.0, 0.0, 0.0, 1;
-  }
 
-  is_initialized_ = true;
-  time_us_ = meas_package.timestamp_;
+    is_initialized_ = true;
+    time_us_ = meas_package.timestamp_;
+  }
 }
 
 void UKF::Prediction(double delta_t) {
