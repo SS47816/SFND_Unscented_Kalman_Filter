@@ -104,11 +104,48 @@ UKF::UKF() {
 
 UKF::~UKF() {}
 
-void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
+void UKF::ProcessMeasurement(const MeasurementPackage& meas_package) {
   /**
    * TODO: Complete this function! Make sure you switch between lidar and radar
    * measurements.
    */
+  if (meas_package.sensor_type_ == MeasurementPackage::SensorType::RADAR)
+  {
+    const double rho = meas_package.raw_measurements_(0);
+    const double phi = meas_package.raw_measurements_(1);
+    const double rho_d = meas_package.raw_measurements_(2);
+
+    const double x = rho*std::cos(phi);
+    const double y = rho*std::sin(phi);
+
+    // update the state vector
+    x_ << x, y, rho_d, phi, 0.0;
+
+    // update the state covariance matrix
+    P_ << std_radr_ * std_radr_, 0.0, 0.0, 0.0, 0.0,
+          0.0, std_radr_ * std_radr_, 0.0, 0.0, 0.0,
+          0.0, 0.0, std_radrd_ * std_radrd_, 0.0, 0.0,
+          0.0, 0.0, 0.0, std_radphi_ * std_radphi_, 0.0,
+          0.0, 0.0, 0.0, 0.0, 1;
+  }
+  else if (meas_package.sensor_type_ == MeasurementPackage::SensorType::LASER)
+  {
+    const double x = meas_package.raw_measurements_(0);
+    const double y = meas_package.raw_measurements_(1);
+
+    // update the state vector
+    x_ << x, y, 0.0, 0.0, 0.0;
+
+    // update the state covariance matrix
+    P_ << std_laspx_ * std_laspx_, 0.0, 0.0, 0.0, 0.0,
+          0.0, std_laspy_ * std_laspy_, 0.0, 0.0, 0.0,
+          0.0, 0.0, 1, 0.0, 0.0,
+          0.0, 0.0, 0.0, 1, 0.0,
+          0.0, 0.0, 0.0, 0.0, 1;
+  }
+
+  is_initialized_ = true;
+  time_us_ = meas_package.timestamp_;
 }
 
 void UKF::Prediction(double delta_t) {
@@ -119,7 +156,7 @@ void UKF::Prediction(double delta_t) {
    */
 }
 
-void UKF::UpdateLidar(MeasurementPackage meas_package) {
+void UKF::UpdateLidar(const MeasurementPackage& meas_package) {
   /**
    * TODO: Complete this function! Use lidar data to update the belief 
    * about the object's position. Modify the state vector, x_, and 
@@ -128,7 +165,7 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
    */
 }
 
-void UKF::UpdateRadar(MeasurementPackage meas_package) {
+void UKF::UpdateRadar(const MeasurementPackage& meas_package) {
   /**
    * TODO: Complete this function! Use radar data to update the belief 
    * about the object's position. Modify the state vector, x_, and 
