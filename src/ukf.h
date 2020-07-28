@@ -1,6 +1,8 @@
 #ifndef UKF_H
 #define UKF_H
 
+#include <vector>
+#include <stdio.h>
 #include "Eigen/Dense"
 #include "measurement_package.h"
 
@@ -50,6 +52,12 @@ class UKF {
 
   // if this is false, radar measurements will be ignored (except for init)
   bool use_radar_;
+
+  // if this is false, the NIS won't be logged
+  bool b_NIS_;
+
+  // recording of the NIS
+  std::vector<double> NIS_;
 
   // state vector: [pos1 pos2 vel_abs yaw_angle yaw_rate] in SI units and rad
   Eigen::VectorXd x_;
@@ -136,7 +144,7 @@ class UKF {
   int n_z_lidar_;
 
  private:
-  void UKF::normAngle(double& angle);
+  void UKF::NormAngle(double& angle);
 
   void UKF::AugmentedSigmaPoints();
 
@@ -144,7 +152,9 @@ class UKF {
 
   void UKF::PredictMeanAndCovariance();
 
+  void UKF::InitUKF(const MeasurementPackage& meas_package);
 
+  void UKF::Update(const MeasurementPackage &meas_package);
 };
 
 #endif  // UKF_H
