@@ -217,58 +217,6 @@ void UKF::Prediction(double delta_t) {
   PredictMeanAndCovariance();
 }
 
-void UKF::InitUKF(const MeasurementPackage& meas_package)
-{
-  if (meas_package.sensor_type_ == MeasurementPackage::SensorType::RADAR)
-  {
-    const double rho = meas_package.raw_measurements_(0);
-    const double phi = meas_package.raw_measurements_(1);
-    const double rho_d = meas_package.raw_measurements_(2);
-
-    const double x = rho*std::cos(phi);
-    const double y = rho*std::sin(phi);
-
-    // update the state vector
-    x_ << x, y, rho_d, phi, 0.0;
-
-    // update the state covariance matrix
-    P_ << std_radr_ * std_radr_, 0.0, 0.0, 0.0, 0.0,
-          0.0, std_radr_ * std_radr_, 0.0, 0.0, 0.0,
-          0.0, 0.0, std_radrd_ * std_radrd_, 0.0, 0.0,
-          0.0, 0.0, 0.0, std_radphi_ * std_radphi_, 0.0,
-          0.0, 0.0, 0.0, 0.0, 1;
-
-    is_initialized_ = true;
-    time_us_ = meas_package.timestamp_;
-  }
-  else if (meas_package.sensor_type_ == MeasurementPackage::SensorType::LASER)
-  {
-    const double x = meas_package.raw_measurements_(0);
-    const double y = meas_package.raw_measurements_(1);
-
-    // update the state vector
-    x_ << x, y, 0.0, 0.0, 0.0;
-
-    // update the state covariance matrix
-    P_ << std_laspx_ * std_laspx_, 0.0, 0.0, 0.0, 0.0,
-          0.0, std_laspy_ * std_laspy_, 0.0, 0.0, 0.0,
-          0.0, 0.0, 1, 0.0, 0.0,
-          0.0, 0.0, 0.0, 1, 0.0,
-          0.0, 0.0, 0.0, 0.0, 1;
-
-    is_initialized_ = true;
-    time_us_ = meas_package.timestamp_;
-  }
-}
-
-void UKF::ProcessMeasurement(const MeasurementPackage& meas_package) {
-  /**
-   * TODO: Complete this function! Make sure you switch between lidar and radar
-   * measurements.
-   */
-  
-}
-
 void UKF::UpdateLidar(const MeasurementPackage& meas_package) {
   /**
    * TODO: Complete this function! Use lidar data to update the belief 
@@ -298,10 +246,10 @@ void UKF::UpdateLidar(const MeasurementPackage& meas_package) {
   // update the predicted covariance
   MatrixXd S_lidar_pred = MatrixXd(n_z_lidar_, n_z_lidar_);
   S_lidar_pred.fill(0.0);
-  
+  VectorXd z_diff;
   for (int i = 0; i < weights_.size(); i++)
   {
-    VectorXd z_diff = Zsig_lidar_.col(i) - z_lidar_pred_;
+    z_diff = Zsig_lidar_.col(i) - z_lidar_pred_;
     S_lidar_pred += weights_(i) * (z_diff) * (z_diff).transpose();
   }
 
@@ -310,14 +258,12 @@ void UKF::UpdateLidar(const MeasurementPackage& meas_package) {
   S_lidar_pred_ = S_lidar_pred;
 
   MatrixXd T_XZ = MatrixXd(n_x_, n_z_lidar_); // Cross-correlation matrix
-  VectorXd z_diff = VectorXd(n_z_lidar_);
   VectorXd x_diff = VectorXd(n_x_);
 
-  // // Calculate Cross-correlation matrix
+  // Calculate Cross-correlation matrix
   T_XZ.fill(0.0);
   for (int i = 0; i < weights_.size(); i++)
   {
-    z_diff = Zsig_lidar_.col(i) - z_lidar_pred_;
     x_diff = Xsig_pred_.col(i) - x_;
     T_XZ += weights_(i) * (x_diff) * (z_diff).transpose();
   }
@@ -388,16 +334,12 @@ void UKF::UpdateRadar(const MeasurementPackage& meas_package) {
   S_radar_pred_ = S_radar_pred;
 
   MatrixXd T_XZ = MatrixXd(n_x_, n_z_radar_); // Cross-correlation matrix
-  VectorXd z_diff = VectorXd(n_z_radar_);
   VectorXd x_diff = VectorXd(n_x_);
 
   // Calculate Cross-correlation matrix
   T_XZ.fill(0.0);
   for (int i = 0; i < weights_.size(); i++)
   {
-    z_diff = Zsig_radar_.col(i) - z_radar_pred_;
-    NormAngle(z_diff(1));
-
     x_diff = Xsig_pred_.col(i) - x_;
     NormAngle(x_diff(3));
 
@@ -421,14 +363,76 @@ void UKF::UpdateRadar(const MeasurementPackage& meas_package) {
   }
 }
 
-void UKF::Update(const MeasurementPackage &meas_package)
-{
-  if (meas_package.sensor_type_ == MeasurementPackage::RADAR)
+void UKF::ProcessMeasurement(const MeasurementPackage& meas_package) {
+  /**
+   * TODO: Complete this function! Make sure you switch between lidar and radar
+   * measurements.
+   */
+
+  if (!is_initialized_)
   {
-    UpdateRadar(meas_package);
+    // initialize UKF based on the sensor type
+    if (meas_package.sensor_type_ == MeasurementPackage::SensorType::RADAR)
+    {
+      const double rho = meas_package.raw_measurements_(0);
+      const double phi = meas_package.raw_measurements_(1);
+      const double rho_d = meas_package.raw_measurements_(2);
+
+      const double x = rho*std::cos(phi);
+      const double y = rho*std::sin(phi);
+
+      // update the state vector
+      x_ << x, y, rho_d, phi, 0.0;
+
+      // update the state covariance matrix
+      P_ << std_radr_ * std_radr_, 0.0, 0.0, 0.0, 0.0,
+            0.0, std_radr_ * std_radr_, 0.0, 0.0, 0.0,
+            0.0, 0.0, std_radrd_ * std_radrd_, 0.0, 0.0,
+            0.0, 0.0, 0.0, std_radphi_ * std_radphi_, 0.0,
+            0.0, 0.0, 0.0, 0.0, 1;
+
+      is_initialized_ = true;
+      time_us_ = meas_package.timestamp_;
+    }
+    else if (meas_package.sensor_type_ == MeasurementPackage::SensorType::LASER)
+    {
+      const double x = meas_package.raw_measurements_(0);
+      const double y = meas_package.raw_measurements_(1);
+
+      // update the state vector
+      x_ << x, y, 0.0, 0.0, 0.0;
+
+      // update the state covariance matrix
+      P_ << std_laspx_ * std_laspx_, 0.0, 0.0, 0.0, 0.0,
+            0.0, std_laspy_ * std_laspy_, 0.0, 0.0, 0.0,
+            0.0, 0.0, 1, 0.0, 0.0,
+            0.0, 0.0, 0.0, 1, 0.0,
+            0.0, 0.0, 0.0, 0.0, 1;
+
+      is_initialized_ = true;
+      time_us_ = meas_package.timestamp_;
+    }
   }
-  else if (meas_package.sensor_type_ == MeasurementPackage::LASER)
+  else // if UKF is initialized
   {
-    UpdateLidar(meas_package);
+    // update the time interval
+    const double dt = (meas_package.timestamp_ - time_us_) / 1000000.0;
+    time_us_ = meas_package.timestamp_;
+    
+    // Prediction Step
+    Prediction(dt);
+
+    // Update Step
+    if (meas_package.sensor_type_ == MeasurementPackage::SensorType::RADAR)
+    {
+      UpdateRadar(meas_package);
+    }
+    else if (meas_package.sensor_type_ == MeasurementPackage::SensorType::LASER)
+    {
+      UpdateLidar(meas_package);
+    }
   }
+  
+
+  
 }

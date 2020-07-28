@@ -144,17 +144,14 @@ class UKF {
   int n_z_lidar_;
 
  private:
-  void UKF::NormAngle(double& angle);
+  void NormAngle(double& angle);
 
-  void UKF::AugmentedSigmaPoints();
+  void AugmentedSigmaPoints();
 
-  void UKF::SigmaPointPrediction(const double delta_t);
+  void SigmaPointPrediction(const double delta_t);
 
-  void UKF::PredictMeanAndCovariance();
+  void PredictMeanAndCovariance();
 
-  void UKF::InitUKF(const MeasurementPackage& meas_package);
-
-  void UKF::Update(const MeasurementPackage &meas_package);
 };
 
 #endif  // UKF_H
