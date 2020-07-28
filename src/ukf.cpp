@@ -14,12 +14,6 @@ UKF::UKF() {
   // if this is false, radar measurements will be ignored (except during init)
   use_radar_ = true;
 
-  // initial state vector
-  x_ = VectorXd(5);
-
-  // initial covariance matrix
-  P_ = MatrixXd(5, 5);
-
   // Process noise standard deviation longitudinal acceleration in m/s^2
   std_a_ = 30;
 
@@ -54,6 +48,58 @@ UKF::UKF() {
    * TODO: Complete the initialization. See ukf.h for other member properties.
    * Hint: one or more values initialized above might be wildly off...
    */
+
+  // State dimension
+  n_x_ = 5;
+
+  // Augmented state dimension
+  n_aug_ = n_x_ + 2;
+
+  // Sigma point spreading parameter
+  lambda_ = 3 - n_aug_;
+
+  // Radar measurement dimension
+  n_z_radar_ = 3;
+
+  // Lidar measurement dimension
+  n_z_lidar_ = 2;
+
+  // initial state vector
+  x_ = VectorXd(n_x_);
+
+  // initial covariance matrix
+  P_ = MatrixXd(n_x_, n_x_);
+
+  // predicted sigma points in state space
+  MatrixXd Xsig_pred_ = MatrixXd(n_x_, 2 * n_aug_ + 1);
+  
+  // predicted sigma points in augmented state space
+  MatrixXd Xsig_aug_ = MatrixXd(n_aug_, 2 * n_aug_ + 1);
+  
+  // measurement sigma points in state space
+  MatrixXd Zsig_radar_ = MatrixXd(n_z_radar_, 2 * n_aug_ + 1);
+
+  // measurement sigma points in state space
+  MatrixXd Zsig_lidar_ = MatrixXd(n_z_lidar_, 2 * n_aug_ + 1);
+  
+  // Weights of sigma points
+  weights_ = Eigen::VectorXd(2*n_aug_ + 1);
+  weights_(0) = lambda_/(lambda_ + n_aug_);
+  const double weight = 0.5/(lambda_ + n_aug_);
+  for (int i = 1; i < 2*n_aug_+1; ++i) {  
+    weights_(i) = weight;
+  }
+
+  // Generate noise covariance matrix for Radar
+  R_radar_ = MatrixXd(n_z_radar_, n_z_radar_);
+  R_radar_ << std_radr_ * std_radr_, 0.0, 0.0,
+              0.0, std_radphi_ * std_radphi_, 0.0,
+              0.0, 0.0, std_radrd_ * std_radrd_;
+
+  // Generate noise covariance matrix for Lidar
+  R_lidar_ = MatrixXd(n_z_lidar_, n_z_lidar_);
+  R_lidar_ << std_laspx_ * std_laspx_, 0.0,
+              0.0, std_laspy_ * std_laspy_;
 }
 
 UKF::~UKF() {}

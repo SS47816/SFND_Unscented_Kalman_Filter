@@ -57,8 +57,23 @@ class UKF {
   // state covariance matrix
   Eigen::MatrixXd P_;
 
-  // predicted sigma points matrix
+  // predicted sigma points in state space
   Eigen::MatrixXd Xsig_pred_;
+
+  // predicted sigma points in augmented state space
+  Eigen::MatrixXd Xsig_aug_;
+
+  // measurement sigma points in state space
+  Eigen::MatrixXd Zsig_radar_;
+  
+  // measurement sigma points in state space
+  Eigen::MatrixXd Zsig_lidar_;
+
+  // Generate noise covariance matrix for Radar
+  Eigen::MatrixXd R_radar_;
+
+  // Generate noise covariance matrix for Lidar
+  Eigen::MatrixXd R_lidar_;
 
   // time when the state is true, in us
   long long time_us_;
@@ -95,6 +110,13 @@ class UKF {
 
   // Sigma point spreading parameter
   double lambda_;
+
+  // Radar measurement dimension
+  int n_z_radar_;
+
+  // Lidar measurement dimension
+  int n_z_lidar_;
+
 };
 
 #endif  // UKF_H
