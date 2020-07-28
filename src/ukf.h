@@ -54,8 +54,26 @@ class UKF {
   // state vector: [pos1 pos2 vel_abs yaw_angle yaw_rate] in SI units and rad
   Eigen::VectorXd x_;
 
+  // state vector: [pos1 pos2 vel_abs yaw_angle yaw_rate std_a std_yawdd] in SI units and rad
+  Eigen::VectorXd x_aug_;
+
   // state covariance matrix
   Eigen::MatrixXd P_;
+
+  // augmented state covariance matrix
+  Eigen::MatrixXd P_aug_;
+
+  // predicted radar measurement: [rho phi rho_d] in SI units and rad
+  Eigen::VectorXd z_radar_pred_;
+
+  // predicted lidar measurement: [pos_x pos_y] in SI units
+  Eigen::VectorXd z_lidar_pred_;
+
+  // predicted radar measurement covariance matrix
+  Eigen::MatrixXd S_radar_pred_;
+
+  // predicted lidar measurement covariance matrix
+  Eigen::MatrixXd S_lidar_pred_;
 
   // predicted sigma points in state space
   Eigen::MatrixXd Xsig_pred_;
@@ -116,6 +134,11 @@ class UKF {
 
   // Lidar measurement dimension
   int n_z_lidar_;
+
+ private:
+  void UKF::normAngle(double& angle);
+
+  void UKF::AugmentedSigmaPoints(MatrixXd* Xsig_out);
 
 };
 

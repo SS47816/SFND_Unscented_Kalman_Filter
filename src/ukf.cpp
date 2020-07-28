@@ -104,6 +104,37 @@ UKF::UKF() {
 
 UKF::~UKF() {}
 
+void UKF::normAngle(double& angle)
+{
+  while (angle > M_PI) angle -= 2.0 * M_PI;
+  while (angle < -M_PI) angle += 2.0 * M_PI;
+}
+
+void UKF::AugmentedSigmaPoints(MatrixXd* Xsig_out)
+{
+  // create augmented mean state
+  x_aug_.head(n_x_) = x_;
+  x_aug_(n_x_) = 0;
+  x_aug_(n_x_+1) = 0;
+
+  // create augmented covariance matrix
+  P_aug_.fill(0.0);
+  P_aug_.topLeftCorner(n_x_, n_x_) = P_;
+  P_aug_(n_x_, n_x_) = std_a_*std_a_;
+  P_aug_(n_x_+1, n_x_+1) = std_yawdd_*std_yawdd_;
+
+  // create square root matrix
+  MatrixXd L = P_aug_.llt().matrixL();
+
+  // create augmented sigma points
+  Xsig_aug_.col(0)  = x_aug_;
+  for (int i = 0; i< n_aug_; ++i)
+  {
+    Xsig_aug_.col(i+1) = x_aug_ + sqrt(lambda_+n_aug_) * L.col(i);
+    Xsig_aug_.col(i+1+n_aug_) = x_aug_ - sqrt(lambda_+n_aug_) * L.col(i);
+  }
+}
+
 void UKF::ProcessMeasurement(const MeasurementPackage& meas_package) {
   /**
    * TODO: Complete this function! Make sure you switch between lidar and radar
