@@ -138,7 +138,12 @@ class UKF {
  private:
   void UKF::normAngle(double& angle);
 
-  void UKF::AugmentedSigmaPoints(MatrixXd* Xsig_out);
+  void UKF::AugmentedSigmaPoints();
+
+  void UKF::SigmaPointPrediction(const double delta_t);
+
+  void UKF::PredictMeanAndCovariance();
+
 
 };
 

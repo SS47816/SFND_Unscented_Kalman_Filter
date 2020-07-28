@@ -110,7 +110,7 @@ void UKF::normAngle(double& angle)
   while (angle < -M_PI) angle += 2.0 * M_PI;
 }
 
-void UKF::AugmentedSigmaPoints(MatrixXd* Xsig_out)
+void UKF::AugmentedSigmaPoints()
 {
   // create augmented mean state
   x_aug_.head(n_x_) = x_;
@@ -134,6 +134,87 @@ void UKF::AugmentedSigmaPoints(MatrixXd* Xsig_out)
     Xsig_aug_.col(i+1) = x_aug_ + sqrt(lambda_+n_aug_) * L.col(i);
     Xsig_aug_.col(i+1+n_aug_) = x_aug_ - sqrt(lambda_+n_aug_) * L.col(i);
   }
+}
+
+void UKF::SigmaPointPrediction(const double delta_t)
+{
+  // predict sigma points
+  for (int i = 0; i< 2*n_aug_+1; ++i) {
+    // extract values for better readability
+    const double p_x = Xsig_aug_(0, i);
+    const double p_y = Xsig_aug_(1, i);
+    const double v = Xsig_aug_(2, i);
+    const double yaw = Xsig_aug_(3, i);
+    const double yawd = Xsig_aug_(4, i);
+    const double nu_a = Xsig_aug_(5, i);
+    const double nu_yawdd = Xsig_aug_(6, i);
+
+    // predicted state values
+    double px_p, py_p;
+
+    // avoid division by zero
+    if (fabs(yawd) > std::numeric_limits<double>::epsilon()) {
+        px_p = p_x + v/yawd * ( sin (yaw + yawd*delta_t) - sin(yaw));
+        py_p = p_y + v/yawd * ( cos(yaw) - cos(yaw+yawd*delta_t) );
+    } else {
+        px_p = p_x + v*delta_t*cos(yaw);
+        py_p = p_y + v*delta_t*sin(yaw);
+    }
+
+    double v_p = v;
+    double yaw_p = yaw + yawd*delta_t;
+    double yawd_p = yawd;
+
+    // add noise
+    px_p = px_p + 0.5*nu_a*delta_t*delta_t * cos(yaw);
+    py_p = py_p + 0.5*nu_a*delta_t*delta_t * sin(yaw);
+    v_p = v_p + nu_a*delta_t;
+
+    yaw_p = yaw_p + 0.5*nu_yawdd*delta_t*delta_t;
+    yawd_p = yawd_p + nu_yawdd*delta_t;
+
+    // write predicted sigma point into right column
+    Xsig_pred_(0, i) = px_p;
+    Xsig_pred_(1, i) = py_p;
+    Xsig_pred_(2, i) = v_p;
+    Xsig_pred_(3, i) = yaw_p;
+    Xsig_pred_(4, i) = yawd_p;
+  }
+}
+
+void UKF::PredictMeanAndCovariance()
+{
+  // predicted state mean
+  VectorXd x_pred = VectorXd(n_x_);
+  x_pred.fill(0.0);
+  for (int i = 0; i < 2 * n_aug_ + 1; ++i) {  // iterate over sigma points
+    x_pred = x_pred + weights_(i) * Xsig_pred_.col(i);
+  }
+  x_ = std::move(x_pred);
+
+  // predicted state covariance matrix
+  MatrixXd P_pred = MatrixXd(n_x_, n_x_);
+  P_pred.fill(0.0);
+  for (int i = 0; i < 2 * n_aug_ + 1; ++i) {  // iterate over sigma points
+    // state difference
+    VectorXd x_diff = Xsig_pred_.col(i) - x_;
+    normAngle(x_diff(3));
+    P_ = P_ + weights_(i) * x_diff * x_diff.transpose() ;
+  }
+  P_ = std::move(P_pred);
+}
+
+void UKF::Prediction(double delta_t) {
+  /**
+   * TODO: Complete this function! Estimate the object's location. 
+   * Modify the state vector, x_. Predict sigma points, the state, 
+   * and the state covariance matrix.
+   */
+  AugmentedSigmaPoints();
+
+  SigmaPointPrediction(delta_t);
+
+  PredictMeanAndCovariance();
 }
 
 void UKF::ProcessMeasurement(const MeasurementPackage& meas_package) {
@@ -180,57 +261,6 @@ void UKF::ProcessMeasurement(const MeasurementPackage& meas_package) {
 
     is_initialized_ = true;
     time_us_ = meas_package.timestamp_;
-  }
-}
-
-void UKF::Prediction(double delta_t) {
-  /**
-   * TODO: Complete this function! Estimate the object's location. 
-   * Modify the state vector, x_. Predict sigma points, the state, 
-   * and the state covariance matrix.
-   */
-
-  // predict sigma points
-  for (int i = 0; i< 2*n_aug_+1; ++i) {
-    // extract values for better readability
-    const double p_x = Xsig_aug_(0, i);
-    const double p_y = Xsig_aug_(1, i);
-    const double v = Xsig_aug_(2, i);
-    const double yaw = Xsig_aug_(3, i);
-    const double yawd = Xsig_aug_(4, i);
-    const double nu_a = Xsig_aug_(5, i);
-    const double nu_yawdd = Xsig_aug_(6, i);
-
-    // predicted state values
-    double px_p, py_p;
-
-    // avoid division by zero
-    if (fabs(yawd) > std::numeric_limits<double>::epsilon()) {
-        px_p = p_x + v/yawd * ( sin (yaw + yawd*delta_t) - sin(yaw));
-        py_p = p_y + v/yawd * ( cos(yaw) - cos(yaw+yawd*delta_t) );
-    } else {
-        px_p = p_x + v*delta_t*cos(yaw);
-        py_p = p_y + v*delta_t*sin(yaw);
-    }
-
-    double v_p = v;
-    double yaw_p = yaw + yawd*delta_t;
-    double yawd_p = yawd;
-
-    // add noise
-    px_p = px_p + 0.5*nu_a*delta_t*delta_t * cos(yaw);
-    py_p = py_p + 0.5*nu_a*delta_t*delta_t * sin(yaw);
-    v_p = v_p + nu_a*delta_t;
-
-    yaw_p = yaw_p + 0.5*nu_yawdd*delta_t*delta_t;
-    yawd_p = yawd_p + nu_yawdd*delta_t;
-
-    // write predicted sigma point into right column
-    Xsig_pred_(0, i) = px_p;
-    Xsig_pred_(1, i) = py_p;
-    Xsig_pred_(2, i) = v_p;
-    Xsig_pred_(3, i) = yaw_p;
-    Xsig_pred_(4, i) = yawd_p;
   }
 }
 
