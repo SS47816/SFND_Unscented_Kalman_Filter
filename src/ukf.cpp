@@ -33,7 +33,7 @@ UKF::UKF() {
   NIS_radar_upper_rate_ = 0.0;
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 3;
+  std_a_ = 2;
 
   // Process noise standard deviation yaw acceleration in rad/s^2
   std_yawdd_ = 3;
