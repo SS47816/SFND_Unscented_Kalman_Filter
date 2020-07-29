@@ -19,18 +19,22 @@ UKF::UKF() {
   b_NIS_ = true;
 
   // NIS threshold
-  NIS_lower_ = 0.352;
-  NIS_upper_ = 7.815;
+  NIS_lower_thresh_ = 0.352;
+  NIS_upper_thresh_ = 7.815;
 
   // Measurement count
-  lidar_count_ = 0;
-  radar_count_ = 0;
+  lidar_total_count_ = 0;
+  lidar_lower_count_ = 0;
+  lidar_upper_count_ = 0;
+  radar_total_count_ = 0;
+  radar_lower_count_ = 0;
+  radar_upper_count_ = 0;
 
   // NIS outlier rate
-  NIS_lidar_lower_rate_ = 0.0;
-  NIS_lidar_upper_rate_ = 0.0;
-  NIS_radar_lower_rate_ = 0.0;
-  NIS_radar_upper_rate_ = 0.0;
+  // NIS_lidar_lower_rate_ = 0.0;
+  // NIS_lidar_upper_rate_ = 0.0;
+  // NIS_radar_lower_rate_ = 0.0;
+  // NIS_radar_upper_rate_ = 0.0;
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
   std_a_ = 2;
@@ -375,17 +379,22 @@ void UKF::UpdateLidar(const MeasurementPackage& meas_package) {
   if (b_NIS_)
   {
     const double nis = z_diff.transpose() * S.inverse() * z_diff;
-    if (nis <= NIS_lower_)
-    {
-      NIS_lidar_lower_rate_ = (NIS_lidar_lower_rate_*lidar_count_ + 1)/(++lidar_count_);
-    }
-    else if (nis >= NIS_upper_)
-    {
-      NIS_lidar_upper_rate_ = (NIS_lidar_upper_rate_*lidar_count_ + 1)/(++lidar_count_);
-    }
     
-    std::cout << "NIS_lidar_lower_rate_: " << NIS_lidar_lower_rate_ << std::endl;
-    std::cout << "NIS_lidar_upper_rate_: " << NIS_lidar_upper_rate_ << std::endl;
+    lidar_total_count_++;
+
+    if (nis <= NIS_lower_thresh_)
+    {
+      lidar_lower_count_++;
+    }
+    else if (nis >= NIS_upper_thresh_)
+    {
+      lidar_upper_count_++;
+    }
+
+    const double NIS_lidar_lower_rate = lidar_lower_count_/lidar_total_count_;
+    const double NIS_lidar_upper_rate = lidar_upper_count_/lidar_total_count_;
+    std::cout << "NIS_lidar_lower_rate_: " << NIS_lidar_lower_rate << std::endl;
+    std::cout << "NIS_lidar_upper_rate_: " << NIS_lidar_upper_rate << std::endl;
   }
 }
 
@@ -473,16 +482,22 @@ void UKF::UpdateRadar(const MeasurementPackage& meas_package) {
   if (b_NIS_)
   {
     const double nis = z_diff.transpose() * S.inverse() * z_diff;
-    if (nis <= NIS_lower_)
+
+    radar_total_count_++;
+
+    if (nis <= NIS_lower_thresh_)
     {
-      NIS_radar_lower_rate_ = (NIS_radar_lower_rate_*lidar_count_ + 1)/(++lidar_count_);
+      radar_lower_count_++;
     }
-    else if (nis >= NIS_upper_)
+    else if (nis >= NIS_upper_thresh_)
     {
-      NIS_radar_upper_rate_ = (NIS_radar_upper_rate_*lidar_count_ + 1)/(++lidar_count_);
+      radar_upper_count_++;
     }
-    std::cout << "NIS_radar_lower_rate_: " << NIS_radar_lower_rate_ << std::endl;
-    std::cout << "NIS_radar_upper_rate_: " << NIS_radar_upper_rate_ << std::endl;
+
+    const double NIS_radar_lower_rate = radar_lower_count_/radar_total_count_;
+    const double NIS_radar_upper_rate = radar_upper_count_/radar_total_count_;
+    std::cout << "NIS_radar_lower_rate_: " << NIS_radar_lower_rate << std::endl;
+    std::cout << "NIS_radar_upper_rate_: " << NIS_radar_upper_rate << std::endl;
   }
 }
 

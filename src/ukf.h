@@ -86,18 +86,16 @@ class UKF {
   bool b_NIS_;
 
   // NIS threshold
-  double NIS_lower_;
-  double NIS_upper_;
+  double NIS_lower_thresh_;
+  double NIS_upper_thresh_;
 
   // Measurement count
-  long lidar_count_;
-  long radar_count_;
-
-  // NIS outlier rate
-  double NIS_lidar_lower_rate_;
-  double NIS_lidar_upper_rate_;
-  double NIS_radar_lower_rate_;
-  double NIS_radar_upper_rate_;
+  long lidar_total_count_;
+  long lidar_lower_count_;
+  long lidar_upper_count_;
+  long radar_total_count_;
+  long radar_lower_count_;
+  long radar_upper_count_;
 
   // Weights of sigma points
   Eigen::VectorXd weights_;
