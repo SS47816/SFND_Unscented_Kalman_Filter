@@ -77,14 +77,8 @@ class UKF {
   // state vector: [pos1 pos2 vel_abs yaw_angle yaw_rate] in SI units and rad
   Eigen::VectorXd x_;
 
-  // state vector: [pos1 pos2 vel_abs yaw_angle yaw_rate std_a std_yawdd] in SI units and rad
-  Eigen::VectorXd x_aug_;
-
   // state covariance matrix
   Eigen::MatrixXd P_;
-
-  // augmented state covariance matrix
-  Eigen::MatrixXd P_aug_;
 
   // predicted radar measurement: [rho phi rho_d] in SI units and rad
   Eigen::VectorXd z_radar_pred_;
