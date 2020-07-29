@@ -26,8 +26,8 @@ public:
 	bool visualize_radar = true;
 	bool visualize_pcd = false;
 	// Predict path in the future using UKF
-	double projectedTime = 3;
-	int projectedSteps = 6;
+	double projectedTime = 2;
+	int projectedSteps = 10;
 	// --------------------------------
 
 	Highway(pcl::visualization::PCLVisualizer::Ptr& viewer)

@@ -181,8 +181,7 @@ void UKF::ProcessMeasurement(const MeasurementPackage& meas_package) {
     
     // Prediction Step
     Prediction(dt);
-    std::cout << "dt " << dt << std::endl;
-    // std::cout << "x_ " << x_ << std::endl;
+    std::cout << "x_ " << x_ << std::endl;
     
     // Update Step
     if (meas_package.sensor_type_ == MeasurementPackage::SensorType::RADAR)
@@ -208,7 +207,6 @@ void UKF::Prediction(double delta_t) {
   SigmaPointPrediction(delta_t);
   
   PredictMeanAndCovariance();
-  // std::cout << "UKF Prediction Done!" << std::endl;
 }
 
 void UKF::NormAngle(double& angle)
