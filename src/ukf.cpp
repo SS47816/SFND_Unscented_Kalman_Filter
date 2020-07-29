@@ -445,11 +445,11 @@ void UKF::ProcessMeasurement(const MeasurementPackage& meas_package) {
       x_ << x, y, rho_d, phi, 0.0;
 
       // update the state covariance matrix
-      P_ << std_radr_ * std_radr_, 0.0, 0.0, 0.0, 0.0,
-            0.0, std_radr_ * std_radr_, 0.0, 0.0, 0.0,
-            0.0, 0.0, std_radrd_ * std_radrd_, 0.0, 0.0,
-            0.0, 0.0, 0.0, std_radphi_ * std_radphi_, 0.0,
-            0.0, 0.0, 0.0, 0.0, 1;
+      P_ << std_radr_*std_radr_, 0.0, 0.0, 0.0, 0.0,
+            0.0, std_radr_*std_radr_, 0.0, 0.0, 0.0,
+            0.0, 0.0, std_radrd_*std_radrd_, 0.0, 0.0,
+            0.0, 0.0, 0.0, std_radphi_*std_radphi_, 0.0,
+            0.0, 0.0, 0.0, 0.0, 1.0;
 
       is_initialized_ = true;
       time_us_ = meas_package.timestamp_;
@@ -463,11 +463,11 @@ void UKF::ProcessMeasurement(const MeasurementPackage& meas_package) {
       x_ << x, y, 0.0, 0.0, 0.0;
 
       // update the state covariance matrix
-      P_ << std_laspx_ * std_laspx_, 0.0, 0.0, 0.0, 0.0,
-            0.0, std_laspy_ * std_laspy_, 0.0, 0.0, 0.0,
-            0.0, 0.0, 1, 0.0, 0.0,
-            0.0, 0.0, 0.0, 1, 0.0,
-            0.0, 0.0, 0.0, 0.0, 1;
+      P_ << std_laspx_*std_laspx_, 0.0, 0.0, 0.0, 0.0,
+            0.0, std_laspy_*std_laspy_, 0.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 0.0, 1.0, 0.0,
+            0.0, 0.0, 0.0, 0.0, 1.0;
 
       is_initialized_ = true;
       time_us_ = meas_package.timestamp_;
