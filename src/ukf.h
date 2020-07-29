@@ -80,29 +80,17 @@ class UKF {
   // state covariance matrix
   Eigen::MatrixXd P_;
 
-  // predicted radar measurement: [rho phi rho_d] in SI units and rad
-  Eigen::VectorXd z_radar_pred_;
+  // // predicted radar measurement: [rho phi rho_d] in SI units and rad
+  // Eigen::VectorXd z_radar_pred_;
 
-  // predicted lidar measurement: [pos_x pos_y] in SI units
-  Eigen::VectorXd z_lidar_pred_;
-
-  // predicted radar measurement covariance matrix
-  Eigen::MatrixXd S_radar_pred_;
-
-  // predicted lidar measurement covariance matrix
-  Eigen::MatrixXd S_lidar_pred_;
+  // // predicted lidar measurement: [pos_x pos_y] in SI units
+  // Eigen::VectorXd z_lidar_pred_;
 
   // predicted sigma points in state space
   Eigen::MatrixXd Xsig_pred_;
 
   // predicted sigma points in augmented state space
   Eigen::MatrixXd Xsig_aug_;
-
-  // measurement sigma points in state space
-  Eigen::MatrixXd Zsig_radar_;
-  
-  // measurement sigma points in state space
-  Eigen::MatrixXd Zsig_lidar_;
 
   // Generate noise covariance matrix for Radar
   Eigen::MatrixXd R_radar_;
