@@ -192,10 +192,25 @@ void UKF::ProcessMeasurement(const MeasurementPackage& meas_package) {
   }
 }
 
+void UKF::Prediction(double delta_t) {
+  /**
+   * TODO: Complete this function! Estimate the object's location. 
+   * Modify the state vector, x_. Predict sigma points, the state, 
+   * and the state covariance matrix.
+   */
+  
+  AugmentedSigmaPoints();
+
+  SigmaPointPrediction(delta_t);
+  
+  PredictMeanAndCovariance();
+  // std::cout << "UKF Prediction Done!" << std::endl;
+}
+
 void UKF::NormAngle(double& angle)
 {
   while (angle > M_PI) angle -= 2.0 * M_PI;
-  while (angle < -M_PI) angle += 2.0 * M_PI;
+  while (angle <= -M_PI) angle += 2.0 * M_PI;
 }
 
 void UKF::AugmentedSigmaPoints()
@@ -288,21 +303,6 @@ void UKF::PredictMeanAndCovariance()
     P_pred = P_pred + weights_(i) * x_diff * x_diff.transpose() ;
   }
   P_ = P_pred;
-}
-
-void UKF::Prediction(double delta_t) {
-  /**
-   * TODO: Complete this function! Estimate the object's location. 
-   * Modify the state vector, x_. Predict sigma points, the state, 
-   * and the state covariance matrix.
-   */
-  
-  AugmentedSigmaPoints();
-
-  SigmaPointPrediction(delta_t);
-  
-  PredictMeanAndCovariance();
-  // std::cout << "UKF Prediction Done!" << std::endl;
 }
 
 void UKF::UpdateLidar(const MeasurementPackage& meas_package) {

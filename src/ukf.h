@@ -31,6 +31,35 @@ class UKF {
    */
   void Prediction(double delta_t);
 
+  // state vector: [pos1 pos2 vel_abs yaw_angle yaw_rate] in SI units and rad
+  Eigen::VectorXd x_;
+
+  // state covariance matrix
+  Eigen::MatrixXd P_;
+
+ private:
+  /**
+   * Normalized the angle to the range of (-M_PI, M_PI] in-place
+   * @param angle The variable containing the angle (rad)
+   */
+  void NormAngle(double& angle);
+
+  /**
+   * Generate augmented sigma points
+   */
+  void AugmentedSigmaPoints();
+
+  /**
+   * Predict the new sigma points after a time step
+   * @param delta_t time step (s)
+   */
+  void SigmaPointPrediction(const double delta_t);
+
+  /**
+   * Predict the mean and covariance matrix
+   */
+  void PredictMeanAndCovariance();
+
   /**
    * Updates the state and the state covariance matrix using a laser measurement
    * @param meas_package The measurement at k+1
@@ -70,21 +99,23 @@ class UKF {
   double NIS_radar_lower_rate_;
   double NIS_radar_upper_rate_;
 
-  // // recording of the NIS
-  // std::vector<double> NIS_radar_;
-  // std::vector<double> NIS_lidar_;
+  // Weights of sigma points
+  Eigen::VectorXd weights_;
 
-  // state vector: [pos1 pos2 vel_abs yaw_angle yaw_rate] in SI units and rad
-  Eigen::VectorXd x_;
+  // State dimension
+  int n_x_;
 
-  // state covariance matrix
-  Eigen::MatrixXd P_;
+  // Augmented state dimension
+  int n_aug_;
 
-  // // predicted radar measurement: [rho phi rho_d] in SI units and rad
-  // Eigen::VectorXd z_radar_pred_;
+  // Sigma point spreading parameter
+  double lambda_;
 
-  // // predicted lidar measurement: [pos_x pos_y] in SI units
-  // Eigen::VectorXd z_lidar_pred_;
+  // Radar measurement dimension
+  int n_z_radar_;
+
+  // Lidar measurement dimension
+  int n_z_lidar_;
 
   // predicted sigma points in state space
   Eigen::MatrixXd Xsig_pred_;
@@ -121,33 +152,6 @@ class UKF {
 
   // Radar measurement noise standard deviation radius change in m/s
   double std_radrd_ ;
-
-  // Weights of sigma points
-  Eigen::VectorXd weights_;
-
-  // State dimension
-  int n_x_;
-
-  // Augmented state dimension
-  int n_aug_;
-
-  // Sigma point spreading parameter
-  double lambda_;
-
-  // Radar measurement dimension
-  int n_z_radar_;
-
-  // Lidar measurement dimension
-  int n_z_lidar_;
-
- private:
-  void NormAngle(double& angle);
-
-  void AugmentedSigmaPoints();
-
-  void SigmaPointPrediction(const double delta_t);
-
-  void PredictMeanAndCovariance();
 
 };
 
