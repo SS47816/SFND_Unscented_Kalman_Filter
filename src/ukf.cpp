@@ -226,7 +226,7 @@ void UKF::PredictMeanAndCovariance()
   for (int i = 0; i < 2 * n_aug_ + 1; ++i) {  // iterate over sigma points
     x_pred = x_pred + weights_(i) * Xsig_pred_.col(i);
   }
-  x_ = std::move(x_pred);
+  x_ = x_pred;
 
   // predicted state covariance matrix
   MatrixXd P_pred = MatrixXd(n_x_, n_x_);
@@ -235,9 +235,9 @@ void UKF::PredictMeanAndCovariance()
     // state difference
     VectorXd x_diff = Xsig_pred_.col(i) - x_;
     NormAngle(x_diff(3));
-    P_ = P_ + weights_(i) * x_diff * x_diff.transpose() ;
+    P_pred = P_pred + weights_(i) * x_diff * x_diff.transpose() ;
   }
-  P_ = std::move(P_pred);
+  P_ = P_pred;
 }
 
 void UKF::Prediction(double delta_t) {
@@ -252,6 +252,7 @@ void UKF::Prediction(double delta_t) {
   SigmaPointPrediction(delta_t);
   
   PredictMeanAndCovariance();
+  std::cout << "UKF Prediction Done!" << std::endl;
 }
 
 void UKF::UpdateLidar(const MeasurementPackage& meas_package) {
@@ -482,6 +483,7 @@ void UKF::ProcessMeasurement(const MeasurementPackage& meas_package) {
     
     // Prediction Step
     Prediction(dt);
+    std::cout << "x_" << x_ << std::endl;
     
     // Update Step
     if (meas_package.sensor_type_ == MeasurementPackage::SensorType::RADAR)
@@ -493,6 +495,6 @@ void UKF::ProcessMeasurement(const MeasurementPackage& meas_package) {
       UpdateLidar(meas_package);
     }
 
-    // std::cout << "UKF updated" << std::endl;
+    std::cout << "UKF Update Done" << std::endl;
   }
 }
